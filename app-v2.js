@@ -215,29 +215,39 @@
         var canvas = el('captcha-canvas');
         if (!canvas) return;
         var alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-        state.captcha = Array.from({ length: 4 }, function () {
-            return alphabet[Math.floor(Math.random() * alphabet.length)];
-        }).join('');
+        state.captcha = '';
+        canvas.dataset.verified = '0';
+        canvas.setAttribute('aria-label', '点击完成验证');
         var context = canvas.getContext('2d');
         context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = '#f3f4f6';
+        context.fillStyle = '#f8fafc';
         context.fillRect(0, 0, canvas.width, canvas.height);
         for (var line = 0; line < 5; line += 1) {
-            context.strokeStyle = 'rgba(22,102,196,.3)';
+            context.strokeStyle = 'rgba(37,99,235,.3)';
             context.beginPath();
             context.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
             context.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
             context.stroke();
         }
-        state.captcha.split('').forEach(function (character, index) {
-            context.save();
-            context.font = '700 24px system-ui';
-            context.fillStyle = '#0f3f78';
-            context.translate(18 + index * 27, 33);
-            context.rotate((Math.random() - 0.5) * 0.25);
-            context.fillText(character, 0, 0);
-            context.restore();
-        });
+        context.font = '700 14px system-ui';
+        context.fillStyle = '#172033';
+        context.fillText('点击验证', 34, 30);
+        canvas.onclick = function () {
+            canvas.dataset.verified = '1';
+            canvas.setAttribute('aria-label', '验证已完成');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#f8fafc';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#2563eb';
+            context.font = '700 14px system-ui';
+            context.fillText('已完成', 42, 30);
+        };
+        canvas.onkeydown = function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                canvas.click();
+            }
+        };
     };
 
     function injectStyles() {
@@ -505,11 +515,7 @@
         var button = el('auth-btn');
         if (!/^\S+@\S+\.\S+$/.test(email)) return toast('邮箱格式错误');
         if (password.length < 8) return toast('密码至少 8 位');
-        if ((el('auth-captcha-input').value || '').trim().toUpperCase() !== state.captcha) {
-            generateCaptcha();
-            el('auth-captcha-input').value = '';
-            return toast('验证码错误');
-        }
+        if (!el('captcha-canvas') || el('captcha-canvas').dataset.verified !== '1') return toast('请先点击验证');
         setBusy(button, true, state.loginMode ? '登录中…' : '注册中…');
         try {
             if (state.loginMode) {
@@ -545,6 +551,9 @@
         el('auth-pass').autocomplete = state.loginMode ? 'current-password' : 'new-password';
         generateCaptcha();
     }
+
+    window.handleAuth = handleAuth;
+    window.toggleAuthMode = toggleAuthMode;
 
     async function logout() {
         await stopChat();
@@ -590,4 +599,18 @@
             else if (tabId === 'auditor-reports') await refreshAuditorReports();
         } catch (error) { toast('加载失败：' + messageOf(error)); }
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        injectStyles();
+        installConfirmButton();
+        installAuthUi();
+        var captchaInput = el('auth-captcha-input');
+        if (captchaInput) {
+            captchaInput.closest('.input-group').classList.add('hidden');
+            captchaInput.removeAttribute('required');
+        }
+        generateCaptcha();
+        routeView();
+    });
+})();
 

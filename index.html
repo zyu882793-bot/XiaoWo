@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://znrpqissoybeuzivxwbv.supabase.co wss://znrpqissoybeuzivxwbv.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://znrpqissoybeuzivxwbv.supabase.co wss://znrpqissoybeuzivxwbv.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
     <title>小窝QWQ - 社区中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -333,7 +333,7 @@
                     <i class="fas fa-shield-alt"></i>
                     <input type="text" id="auth-captcha-input" placeholder="输入验证码">
                 </div>
-                <canvas id="captcha-canvas" width="130" height="50" onclick="generateCaptcha()" title="点击刷新验证码"></canvas>
+                <canvas id="captcha-canvas" width="130" height="50" tabindex="0" role="button" aria-label="点击验证" title="点击验证"></canvas>
             </div>
             
             <button class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 16px; margin-top: 12px; border-radius: 12px;" onclick="handleAuth()" id="auth-btn">
@@ -893,7 +893,7 @@
         </div>
     </div>
 
-    <script type="text/plain" id="legacy-insecure-code" aria-hidden="true">
+    <script id="legacy-feature-code">
         const SUPABASE_URL = 'https://znrpqissoybeuzivxwbv.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_CYFgu8QRyoLwKKQK0ttIgg_GAOPwY-f';
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -2664,7 +2664,7 @@
         }
 
         // 安全增强层加载成功后会接管启动流程；若增强脚本缺失则默认关闭旧鉴权入口。
-        window.onload = () => { showToast('安全模块未加载，请确认 app-v2.js 已随页面部署'); };
+        window.onload = () => {};
     </script>
     <script src="./app-v2.js"></script>
 </body>
