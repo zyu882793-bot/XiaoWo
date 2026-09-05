@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://znrpqissoybeuzivxwbv.supabase.co wss://znrpqissoybeuzivxwbv.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
     <title>小窝QWQ - 社区中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -294,6 +297,7 @@
             .profile-header-clean { flex-direction: column; text-align: center; }
         }
     </style>
+    <link rel="stylesheet" href="./styles-v2.css">
 </head>
 <body>
 
@@ -313,11 +317,15 @@
             
             <div class="input-group">
                 <i class="fas fa-user"></i>
-                <input type="text" id="auth-user" placeholder="输入用户名">
+                <input type="email" id="auth-user" placeholder="输入邮箱" autocomplete="email" inputmode="email">
+            </div>
+            <div class="input-group hidden" id="auth-register-username-group">
+                <i class="fas fa-at"></i>
+                <input type="text" id="auth-register-username" placeholder="设置唯一用户名（3–24 位字母、数字或下划线）" autocomplete="username" maxlength="24">
             </div>
             <div class="input-group">
                 <i class="fas fa-lock"></i>
-                <input type="password" id="auth-pass" placeholder="输入密码 (底层SHA-256加密)">
+                <input type="password" id="auth-pass" placeholder="输入密码（至少 8 位）" autocomplete="current-password" minlength="8">
             </div>
             
             <div class="captcha-row">
@@ -355,7 +363,7 @@
             
             <div class="nav-menu" id="menu-user" style="display: none;">
                 <div class="nav-item active" onclick="switchTab('home', this)"><i class="fas fa-compass" style="width:24px;"></i> 发现广场</div>
-                <div class="nav-item" onclick="switchTab('messages', this)"><i class="fas fa-paper-plane" style="width:24px;"></i> 私信盒子</div>
+                <div class="nav-item" id="nav-messages" onclick="switchTab('messages', this)"><i class="fas fa-paper-plane" style="width:24px;"></i> 私信盒子 <span class="nav-badge hidden" id="nav-notification-badge">0</span></div>
                 <div class="nav-item" onclick="switchTab('profile', this)"><i class="fas fa-user" style="width:24px;"></i> 我的主页</div>
             </div>
 
@@ -364,6 +372,7 @@
                 <div class="nav-item" onclick="switchTab('admin-users', this)"><i class="fas fa-users-cog" style="width:24px;"></i> 身份风控</div>
                 <div class="nav-item" onclick="switchTab('admin-posts', this)"><i class="fas fa-shield-alt" style="width:24px;"></i> 超管调度</div>
                 <div class="nav-item" onclick="switchTab('admin-server', this)"><i class="fas fa-server" style="width:24px;"></i> 基建维护</div>
+                <div class="nav-item" onclick="switchTab('admin-logs', this)"><i class="fas fa-clipboard-list" style="width:24px;"></i> 安全审计</div>
             </div>
             
             <div class="nav-menu" id="menu-auditor" style="display: none;">
@@ -446,7 +455,7 @@
                     <div class="chat-main" id="chat-main-area">
                         <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); font-size: 15px; font-weight: 600;">
                             <i class="fas fa-paper-plane" style="font-size: 56px; margin-bottom: 24px; opacity: 0.2;"></i>
-                            点击左侧好友开始加密会话
+                            点击左侧好友开始私密会话
                         </div>
                     </div>
                 </div>
@@ -775,6 +784,7 @@
                 <div style="font-size: 18px; font-weight: 500; line-height: 1.8; margin-bottom: 32px; color: var(--text-main); white-space: pre-wrap;" id="fs-post-text"></div>
                 
                 <div style="display: flex; gap: 16px; align-items: center; border-top: 1px solid var(--border); padding-top: 28px; margin-bottom: 40px; flex-wrap: wrap;">
+                    <button class="btn btn-outline" id="fs-follow-btn" onclick="toggleFollowAuthor()" style="font-size: 14px; padding: 10px 20px;"><i class="fas fa-user-plus"></i> <span id="fs-follow-text">关注作者</span></button>
                     <button class="btn btn-outline" id="fs-like-btn" onclick="toggleLikeCurrentPost()" style="font-size: 14px; padding: 10px 20px;"><i class="fas fa-thumbs-up"></i> 喜欢 (<span id="fs-like-count">0</span>)</button>
                     <button class="btn btn-outline" id="fs-fav-btn" onclick="toggleFavoriteCurrentPost()" style="font-size: 14px; padding: 10px 20px;"><i class="fas fa-star"></i> <span id="fs-fav-text">收藏夹</span></button>
                     <button class="btn btn-outline" onclick="openShareModal()" style="font-size: 14px; padding: 10px 20px;"><i class="fas fa-share"></i> 转发分享</button>
@@ -831,15 +841,16 @@
     </div>
 
     <div id="add-friend-modal" class="modal-overlay hidden" onclick="closeAddFriendModal(event)">
-        <div class="card" style="width: 100%; max-width: 460px;" onclick="event.stopPropagation()">
-            <h3 style="margin-bottom: 20px; font-size: 20px; font-weight: 800;">探寻新节点</h3>
+        <div class="card modal-card add-friend-card" role="dialog" aria-modal="true" aria-labelledby="add-friend-title" style="width: 100%; max-width: 460px;" onclick="event.stopPropagation()">
+            <h3 id="add-friend-title" style="margin-bottom: 10px; font-size: 20px; font-weight: 800;">添加好友</h3>
+            <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 13px; line-height: 1.6;">发送申请后，对方同意才会出现在好友列表。</p>
             <div class="input-group">
                 <i class="fas fa-search"></i>
                 <input type="text" id="friend-search-input" placeholder="输入确切用户名或数字 UID 检索...">
             </div>
             <div style="display:flex; justify-content:flex-end; gap: 16px; margin-top: 24px;">
-                <button class="btn btn-outline" onclick="closeAddFriendModalDirect()">中止</button>
-                <button class="btn btn-primary" onclick="confirmAddFriend()">建立通道</button>
+                <button class="btn btn-outline" onclick="closeAddFriendModalDirect()">取消</button>
+                <button class="btn btn-primary" id="add-friend-submit" onclick="confirmAddFriend()">发送申请</button>
             </div>
         </div>
     </div>
@@ -877,12 +888,12 @@
             </div>
             <div style="display:flex; justify-content:flex-end; gap: 16px; margin-top: 24px;">
                 <button class="btn btn-outline" onclick="closeEditPostModalDirect()">取消操作</button>
-                <button class="btn btn-primary" onclick="confirmEditPost()">保存修正并申诉通关</button>
+                <button class="btn btn-primary" onclick="confirmEditPost()">保存并重新提交审核</button>
             </div>
         </div>
     </div>
 
-    <script>
+    <script type="text/plain" id="legacy-insecure-code" aria-hidden="true">
         const SUPABASE_URL = 'https://znrpqissoybeuzivxwbv.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_CYFgu8QRyoLwKKQK0ttIgg_GAOPwY-f';
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -2652,7 +2663,9 @@
             });
         }
 
-        window.onload = () => { routeView(); };
+        // 安全增强层加载成功后会接管启动流程；若增强脚本缺失则默认关闭旧鉴权入口。
+        window.onload = () => { showToast('安全模块未加载，请确认 app-v2.js 已随页面部署'); };
     </script>
+    <script src="./app-v2.js"></script>
 </body>
 </html>
