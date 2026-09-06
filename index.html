@@ -8,7 +8,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://znrpqissoybeuzivxwbv.supabase.co wss://znrpqissoybeuzivxwbv.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <title>TB社区</title>
   <link rel="stylesheet" href="./styles-v2.css">
-  <script defer src="./app-v2.js?v=20260906-2"></script>
+  <script defer src="./app-v2.js?v=20260906-3"></script>
 </head>
 <body>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -39,11 +39,18 @@
           <span id="human-check-text">点击验证</span>
         </button>
 
+        <label id="auth-code-field" class="field hidden">
+          <span>邮箱验证码</span>
+          <input id="auth-code" type="text" autocomplete="one-time-code" inputmode="numeric" minlength="6" maxlength="8" placeholder="输入验证码">
+        </label>
+
+        <button id="auth-resend" class="text-button hidden" type="button">重新发送</button>
+
         <button id="auth-submit" class="button primary" type="submit">登录</button>
         <button id="auth-mode-toggle" class="text-button" type="button">注册账号</button>
       </form>
 
-      <p id="db-status" class="micro muted">邮箱由 Supabase Auth 管理</p>
+      <p id="db-status" class="micro muted">邮箱登录</p>
     </main>
   </section>
 
